@@ -41,6 +41,8 @@
 #include <hardware/gralloc.h>
 
 #include "GLExtensions.h"
+#include "DisplayHardware/HWComposer.h"
+#include "SurfaceFlinger.h"
 
 using namespace android;
 
@@ -76,7 +78,7 @@ DisplayHardware::DisplayHardware(
         const sp<SurfaceFlinger>& flinger,
         uint32_t dpy)
     : DisplayHardwareBase(flinger, dpy),
-      mFlags(0)
+      mFlinger(flinger), mFlags(0), mHwc(0)
 {
     init(dpy);
 }
@@ -272,6 +274,18 @@ void DisplayHardware::init(uint32_t dpy)
 
     // Unbind the context from this thread
     eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+
+    // initialize the H/W composer
+    mHwc = new HWComposer(mFlinger);
+    if (mHwc->initCheck() == NO_ERROR) {
+        mHwc->setFrameBuffer(mDisplay, mSurface);
+    }
+}
+
+HWComposer& DisplayHardware::getHwComposer() const
+{
+    return *mHwc;
 }
 
 /*
@@ -291,6 +305,9 @@ void DisplayHardware::fini()
 void DisplayHardware::releaseScreen() const
 {
     DisplayHardwareBase::releaseScreen();
+    if (mHwc->initCheck() == NO_ERROR) {
+        mHwc->release();
+    }
 }
 
 void DisplayHardware::acquireScreen() const
@@ -331,7 +348,12 @@ void DisplayHardware::flip(const Region& dirty) const
     }
     
     mPageFlipCount++;
-    eglSwapBuffers(dpy, surface);
+
+    if (mHwc->initCheck() == NO_ERROR) {
+        mHwc->commit();
+    } else {
+        eglSwapBuffers(dpy, surface);
+    }
     // glFinish here prevents the impedence mismatch between software-rendered
     // surfaceflinger surfaces in another thread. Shows no perf loss with vsync on.
     glFinish();
@@ -356,4 +378,24 @@ uint32_t DisplayHardware::getFlags() const
 void DisplayHardware::makeCurrent() const
 {
     eglMakeCurrent(mDisplay, mSurface, mSurface, mContext);
+}
+
+void DisplayHardware::orientationChanged(int orientation) const
+{
+    mNativeWindow->orientationChanged(orientation);
+}
+
+void DisplayHardware::setActionSafeWidthRatio(float asWidthRatio) const
+{
+    mNativeWindow->setActionSafeWidthRatio(asWidthRatio);
+}
+
+void DisplayHardware::setActionSafeHeightRatio(float asHeightRatio) const
+{
+    mNativeWindow->setActionSafeHeightRatio(asHeightRatio);
+}
+
+void DisplayHardware::videoOverlayStarted(bool started) const
+{
+    mNativeWindow->videoOverlayStarted(started);
 }

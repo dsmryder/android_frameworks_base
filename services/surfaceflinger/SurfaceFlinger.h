@@ -200,6 +200,11 @@ public:
     virtual status_t                    unfreezeDisplay(DisplayID dpy, uint32_t flags);
     virtual int                         setOrientation(DisplayID dpy, int orientation, uint32_t flags);
     virtual void                        signal() const;
+    //HDMI Specific
+    virtual void                        enableHDMIOutput(int enable);
+    virtual void                        setActionSafeWidthRatio(float asWidthRatio);
+    virtual void                        setActionSafeHeightRatio(float asHeightRatio);
+
     virtual status_t                    captureScreen(DisplayID dpy,
                                                       sp<IMemoryHeap>* heap,
                                                       uint32_t* width,
@@ -224,6 +229,7 @@ public:
     status_t removeLayer(const sp<LayerBase>& layer);
     status_t addLayer(const sp<LayerBase>& layer);
     status_t invalidateLayerVisibility(const sp<LayerBase>& layer);
+    void invalidateHwcGeometry();
     void destroyLayer(LayerBase const* layer);
 
     sp<Layer> getLayer(const sp<ISurface>& sur) const;
@@ -307,6 +313,7 @@ private:
             void        waitForEvent();
 public:     // hack to work around gcc 4.0.3 bug
             void        signalEvent();
+            void        repaintEverything();
 private:
             void        handleConsoleEvents();
             void        handleTransaction(uint32_t transactionFlags);
@@ -321,11 +328,14 @@ private:
             void        handlePageFlip();
             bool        lockPageFlip(const LayerVector& currentLayers);
             void        unlockPageFlip(const LayerVector& currentLayers);
+            void        handleWorkList();
             void        handleRepaint();
             bool        handleBypassLayer();
             void        postFramebuffer();
             void        composeSurfaces(const Region& dirty);
 
+
+            void        setInvalidateRegion(const Region& reg);
 
             ssize_t     addClientLayer(const sp<Client>& client,
                     const sp<LayerBaseClient>& lbc);
@@ -344,14 +354,6 @@ private:
                     sp<IMemoryHeap>* heap,
                     uint32_t* width, uint32_t* height, PixelFormat* format,
                     uint32_t reqWidth = 0, uint32_t reqHeight = 0);
-
-            status_t directCaptureScreenImplLocked(DisplayID dpy,
-                    sp<IMemoryHeap>* heap,
-                    uint32_t* width, uint32_t* height, PixelFormat* format,
-                    uint32_t reqWidth, uint32_t reqHeight);
-
-            status_t directRenderScreenToTextureLocked(DisplayID dpy,
-                    GLuint* textureName, GLfloat* uOut, GLfloat* vOut);
 
             status_t turnElectronBeamOffImplLocked(int32_t mode);
             status_t turnElectronBeamOnImplLocked(int32_t mode);
@@ -376,7 +378,8 @@ private:
             void        debugFlashRegions();
             void        debugShowFPS() const;
             void        drawWormhole() const;
-           
+            //HDMI Specific
+            void updateHwcHDMI(bool enable);
 
     mutable     MessageQueue    mEventQueue;
 
@@ -417,6 +420,7 @@ private:
                 Region                      mInvalidRegion;
                 Region                      mWormholeRegion;
                 bool                        mVisibleRegionsDirty;
+                bool                        mHwWorkListDirty;
                 bool                        mDeferReleaseConsole;
                 bool                        mFreezeDisplay;
                 int32_t                     mElectronBeamAnimationMode;
@@ -429,6 +433,7 @@ private:
                 // don't use a lock for these, we don't care
                 int                         mDebugRegion;
                 int                         mDebugBackground;
+                int                         mDebugDisableHWC;
                 int                         mRenderEffect;
 		int			    mRenderColorR;
 		int			    mRenderColorG;
@@ -438,6 +443,10 @@ private:
                 volatile nsecs_t            mDebugInTransaction;
                 nsecs_t                     mLastTransactionTime;
                 bool                        mBootFinished;
+                //HDMI specific
+                bool                        mHDMIOutput;
+                Mutex                       mHDMILock;
+                bool                        mOrientationChanged;
 
                 // these are thread safe
     mutable     Barrier                     mReadyToRunBarrier;

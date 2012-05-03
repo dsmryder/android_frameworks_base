@@ -35,6 +35,8 @@
 
 #include <pixelflinger/pixelflinger.h>
 
+#include <hardware/hwcomposer.h>
+
 #include "DisplayHardware/DisplayHardware.h"
 #include "Transform.h"
 
@@ -46,6 +48,7 @@ class DisplayHardware;
 class Client;
 class GraphicBuffer;
 class GraphicPlane;
+class Layer;
 class LayerBaseClient;
 class SurfaceFlinger;
 class Texture;
@@ -92,6 +95,7 @@ public:
             bool setMatrix(const layer_state_t::matrix22_t& matrix);
             bool setTransparentRegionHint(const Region& opaque);
             bool setFlags(uint8_t flags, uint8_t mask);
+            virtual void setGeometry(hwc_layer_t* hwcl);
             
             void commitTransaction();
             bool requestTransaction();
@@ -106,6 +110,7 @@ public:
             void invalidate();
 
     virtual sp<LayerBaseClient> getLayerBaseClient() const { return 0; }
+    virtual sp<Layer> getLayer() const { return 0; }
 
     virtual const char* getTypeId() const { return "LayerBase"; }
 
@@ -232,6 +237,10 @@ protected:
                                GLclampf b, GLclampf alpha) const;
           void clearWithOpenGL(const Region& clip) const;
           void drawWithOpenGL(const Region& clip, const Texture& texture) const;
+          void drawWithOpenGLOptimized(const Region& clip, const Texture& texture) const;
+          enum { QUAD_WIDTH = 16, TEXTURE_MIN_WIDTH = 480 };
+          int getQuadWidth() const { return QUAD_WIDTH; }
+          int getTexMinWidth() const { return TEXTURE_MIN_WIDTH; }
           
           // these must be called from the post/drawing thread
           void setBufferCrop(const Rect& crop);
