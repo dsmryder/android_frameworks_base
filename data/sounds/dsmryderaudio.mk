@@ -23,3 +23,5 @@ PRODUCT_COPY_FILES += \
 	$(LOCAL_PATH)/effects/Unlock.ogg:system/media/audio/ui/Unlock.ogg \
 	$(LOCAL_PATH)/notifications/TheNewStyle.ogg:system/media/audio/notifications/TheNewStyle.ogg \
 	$(LOCAL_PATH)/newwavelabs/OnTheHunt.ogg:system/media/audio/notifications/OnTheHunt.ogg \
+	$(LOCAL_PATH)/newwavelabs/Playa.ogg:system/media/audio/ringtones/Playa.ogg \
+	$(LOCAL_PATH)/newwavelabs/ringtones/daddyringingringtone.ogg:system/media/audio/ringtones/daddyringtone.ogg \
