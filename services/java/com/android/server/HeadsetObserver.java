@@ -49,9 +49,8 @@ class HeadsetObserver extends UEventObserver {
 //    private static final String HEADSET_STATE_PATH = "/sys/class/switch/h2w/state";
 //    private static final String HEADSET_NAME_PATH = "/sys/class/switch/h2w/name";
     private static final String HEADSET_UEVENT_MATCH = "DEVPATH=/devices/virtual/switch/headset_sensor";
-    private static final String HEADSET_STATE_PATH = "/sys/class/switch/h2w/headset_sensor";
-    private static final String HEADSET_NAME_PATH = "/sys/class/switch/h2w/headset_sensor";
-
+    private static final String HEADSET_STATE_PATH = "/sys/class/switch/headset_sensor/state";
+    private static final String HEADSET_NAME_PATH = "/sys/class/switch/headset_sensor/name";
     private static final int BIT_HEADSET = (1 << 0);
     private static final int BIT_HEADSET_NO_MIC = (1 << 1);
     private static final int SUPPORTED_HEADSETS = (BIT_HEADSET|BIT_HEADSET_NO_MIC);
